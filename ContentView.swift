@@ -7,50 +7,57 @@
 
 import SwiftUI
 
+// No seu arquivo ContentView.swift
 struct ContentView: View {
-    @StateObject private var service = EmocaoService()
+    
+    // Use @State para controlar qual aba está selecionada
+    @State private var selectedTab = "Mapa Social"
+    
     
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Mapa Social")
-                .font(.largeTitle)
-                .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-                .padding(.top, 10)
+        TabView(selection: $selectedTab) {
             
-            ScrollView{
-                VStack(spacing: 16){
-                    ForEach(service.emocoes){ emocao in
-                        HStack{
-                            Text(emocao.emoji)
-                                .font(.largeTitle)
-                            VStack(alignment: .leading) {
-                                Text(emocao.titulo)
-                                    .font(.headline)
-                                Text(emocao.descricao)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
-                        }
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
-                        .shadow(radius: 2)
-                        .padding(.horizontal)
-                    }
+            // Aba 1: Mapa Social (agora é a tela inicial)
+            MapaSocialView()
+                .tabItem {
+                    Label("Mapa Social", systemImage: "map.circle.fill")
                 }
-                .padding(.top, 10)
-            }
+                .tag("Mapa Social") // Identificador único para a aba
             
+            // Aba 2: Registrar
+            Text("Tela de Registrar")
+                .tabItem {
+                    Label("Registrar", systemImage: "square.and.pencil.circle.fill")
+                }
+                .tag("Registrar")
             
-            .padding()
+            // Aba 3: Meus Dados
+            Text("Tela de Meus Dados")
+                .tabItem {
+                    Label("Meus Dados", systemImage: "person.circle.fill")
+                }
+                .tag("Meus Dados")
+            
+            // Aba 4: Compartilhar
+            Text("Tela de Compartilhar")
+                .tabItem {
+                    Label("Compartilhar", systemImage: "square.and.arrow.up.circle.fill")
+                }
+                .tag("Compartilhar")
+            
+            // Aba 5: Colaborativo (corrigido)
+            Text("Tela Colaborativa")
+                .tabItem {
+                    Label("Colaborativo", systemImage: "person.3.fill")
+                }
+                .tag("Colaborativo")
         }
     }
 }
 
-#Preview {
-    ContentView()
+// Preview para o Xcode
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
