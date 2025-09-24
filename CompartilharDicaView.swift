@@ -106,3 +106,4 @@ struct CompartilharDicaView_Previews: PreviewProvider {
         CompartilharDicaView()
     }
 }
+

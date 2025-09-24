@@ -6,30 +6,16 @@
 //
 import SwiftUI
 
-// Struct para o modelo de dados das emoções
-struct Emocao: Identifiable, Decodable {
-    let id = UUID()
-    let nome: String
-    let porcentagem: Int
-    let usuarios: Int
-    let emoji: String
-}
-
-// Struct para o modelo de dados das dicas
-struct Dica: Identifiable, Decodable {
-    let id = UUID()
-    let texto: String
-    let autor: String
-    let curtidas: Int
-}
-
 struct MapaSocialView: View {
+    
+    // Variável para controlar qual mapa está sendo exibido
+    @State private var selectedTab: String = "Comunidade"
     
     // Variável para controlar se o sheet está visível ou não
     @State private var showingShareSheet = false
     
-    // Dados de exemplo para as emoções (substitua por dados do seu JSON)
-    let emocoes: [Emocao] = [
+    // Dados de exemplo para as emoções
+    let emocoesComunidade: [Emocao] = [
         Emocao(nome: "Ansiosa", porcentagem: 20, usuarios: 351, emoji: "😟"),
         Emocao(nome: "Feliz", porcentagem: 35, usuarios: 489, emoji: "😊"),
         Emocao(nome: "Cansada", porcentagem: 30, usuarios: 374, emoji: "🥱"),
@@ -38,7 +24,7 @@ struct MapaSocialView: View {
         Emocao(nome: "Inspirada", porcentagem: 3, usuarios: 64, emoji: "💡")
     ]
     
-    // Dados de exemplo para as dicas (substitua por dados do seu JSON)
+    // Dados de exemplo para as dicas
     let dicasPopulares: [Dica] = [
         Dica(texto: "Tirou uma soneca", autor: "Por João Justino", curtidas: 188),
         Dica(texto: "Compartilhou gratidão", autor: "Por Ana Justino", curtidas: 169),
@@ -48,99 +34,99 @@ struct MapaSocialView: View {
     ]
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Seção de Cabeçalho do Mapa Social
-                VStack(spacing: 5) {
-                    Text("Mapa de Emoções Social")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text("Descubra como a comunidade está se sentindo e compartilhe experiências.")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                
-                // Botões de navegação: "Meu Mapa Pessoal" e "Mapa da Comunidade"
-                HStack(spacing: 10) {
-                    Text("Meu Mapa Pessoal")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 15)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(20)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
                     
-                    Text("Mapa da Comunidade")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 15)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(20)
-                }
-                
-                // Cartões de Emoções
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Como a Comunidade Está Hoje")
-                        .font(.headline)
+                    // Seção de Cabeçalho
+                    VStack(spacing: 5) {
+                        Text("Mapa de Emoções Social")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Text("Descubra como a comunidade está se sentindo e compartilhe experiências.")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
                     
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-                        ForEach(emocoes) { emocao in
-                            EmocaoCardView(emocao: emocao)
+                    // Picker para alternar entre "Meu Mapa Pessoal" e "Mapa da Comunidade"
+                    Picker("Selecione o Mapa", selection: $selectedTab) {
+                        Text("Meu Mapa Pessoal").tag("Pessoal")
+                        Text("Mapa da Comunidade").tag("Comunidade")
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    
+                    // Conteúdo dinâmico baseado na seleção do Picker
+                    if selectedTab == "Comunidade" {
+                        
+                        // Cartões de Emoções com NavigationLink
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Como a Comunidade Está Hoje")
+                                .font(.headline)
+                            
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
+                                ForEach(emocoesComunidade) { emocao in
+                                    NavigationLink(destination: SugestoesComunidadeView(emocao: emocao)) {
+                                        EmocaoCardView(emocao: emocao)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
                         }
-                    }
-                }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
-                .padding(.horizontal)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
+                        .padding(.horizontal)
 
-                // Seção "Compartilhe Suas Dicas" modificada
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("Compartilhe Suas Dicas")
-                        .font(.headline)
-                    
-                    // O botão que abrirá a nova tela
-                    Button("Compartilhar Dica") {
-                        // Quando o botão é clicado, a variável muda para 'true'
-                        showingShareSheet = true
+                        // Seção "Compartilhe Suas Dicas"
+                        VStack(alignment: .leading, spacing: 15) {
+                            Text("Compartilhe Suas Dicas")
+                                .font(.headline)
+                            
+                            Button("Compartilhar Dica") {
+                                showingShareSheet = true
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
+                        .padding(.horizontal)
+                        
+                        // Dicas Mais Úteis da Semana
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Dicas Mais Úteis da Semana")
+                                .font(.headline)
+                            
+                            ForEach(dicasPopulares) { dica in
+                                DicaRowView(dica: dica)
+                            }
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
+                        .padding(.horizontal)
+                        
+                    } else {
+                        // Exibe a tela "Meu Mapa Pessoal"
+                        MeuMapaPessoalView()
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
                 }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
-                .padding(.horizontal)
-                
-                // Dicas Mais Úteis da Semana
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Dicas Mais Úteis da Semana")
-                        .font(.headline)
-                    
-                    ForEach(dicasPopulares) { dica in
-                        DicaRowView(dica: dica)
-                    }
-                }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
-                .padding(.horizontal)
+                .padding(.vertical)
             }
-            .padding(.vertical)
-        }
-        .background(Color(.systemGray5))
-        .sheet(isPresented: $showingShareSheet) {
-            // Este é o modificador que mostra a nova tela como um sheet
-            CompartilharDicaView()
+            .background(Color(.systemGray5))
+            .sheet(isPresented: $showingShareSheet) {
+                CompartilharDicaView()
+            }
         }
     }
 }
@@ -176,7 +162,7 @@ struct DicaRowView: View {
     
     var body: some View {
         HStack {
-            Image(systemName: "lightbulb.fill") // Exemplo de ícone
+            Image(systemName: "lightbulb.fill")
                 .foregroundColor(.yellow)
             
             VStack(alignment: .leading, spacing: 2) {

@@ -25,7 +25,7 @@ struct ContentView: View {
                 .tag("Mapa Social") // Identificador único para a aba
             
             // Aba 2: Registrar
-            Text("Tela de Registrar")
+            RegistrarView()
                 .tabItem {
                     Label("Registrar", systemImage: "square.and.pencil.circle.fill")
                 }
