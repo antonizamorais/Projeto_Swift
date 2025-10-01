@@ -4,34 +4,32 @@
 //
 //  Created by user on 20/09/25.
 //
+
+
 import SwiftUI
 
 struct MapaSocialView: View {
     
+    // Injeta o objeto de dados central
+    @EnvironmentObject var appData: AppData
+    
     // Variável para controlar qual mapa está sendo exibido
     @State private var selectedTab: String = "Comunidade"
     
-    // Variável para controlar se o sheet está visível ou não
+    // Variável para controlar se o sheet de compartilhamento de dicas está visível
     @State private var showingShareSheet = false
     
-    // Dados de exemplo para as emoções
-    let emocoesComunidade: [Emocao] = [
-        Emocao(nome: "Ansiosa", porcentagem: 20, usuarios: 351, emoji: "😟"),
-        Emocao(nome: "Feliz", porcentagem: 35, usuarios: 489, emoji: "😊"),
-        Emocao(nome: "Cansada", porcentagem: 30, usuarios: 374, emoji: "🥱"),
-        Emocao(nome: "Produtiva", porcentagem: 10, usuarios: 187, emoji: "🚀"),
-        Emocao(nome: "Triste", porcentagem: 7, usuarios: 122, emoji: "😞"),
-        Emocao(nome: "Inspirada", porcentagem: 3, usuarios: 64, emoji: "💡")
-    ]
+    // Propriedade calculada: Obtém os dados de emoção agregados do AppData
+    var emocoesComunidade: [Emocao] {
+        // Chamada correta da função
+        return appData.emocoesComunidade
+    }
     
-    // Dados de exemplo para as dicas
-    let dicasPopulares: [Dica] = [
-        Dica(texto: "Tirou uma soneca", autor: "Por João Justino", curtidas: 188),
-        Dica(texto: "Compartilhou gratidão", autor: "Por Ana Justino", curtidas: 169),
-        Dica(texto: "Conversou com alguém", autor: "Por Leo Justino", curtidas: 178),
-        Dica(texto: "Caminhou 30 minutos", autor: "Por Maria Justino", curtidas: 167),
-        Dica(texto: "Criou algo com as mãos", autor: "Por Pedro Justino", curtidas: 190)
-    ]
+    // Propriedade calculada: Obtém as 5 dicas mais populares
+    var dicasPopulares: [Dica] {
+        // Chamada correta da função
+        return appData.dicasMaisPopulares
+    }
     
     var body: some View {
         NavigationStack {
@@ -61,17 +59,23 @@ struct MapaSocialView: View {
                     // Conteúdo dinâmico baseado na seleção do Picker
                     if selectedTab == "Comunidade" {
                         
-                        // Cartões de Emoções com NavigationLink
+                        // Cartões de Emoções (usa a propriedade calculada 'emocoesComunidade')
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Como a Comunidade Está Hoje")
                                 .font(.headline)
                             
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-                                ForEach(emocoesComunidade) { emocao in
-                                    NavigationLink(destination: SugestoesComunidadeView(emocao: emocao)) {
-                                        EmocaoCardView(emocao: emocao)
+                            if emocoesComunidade.isEmpty {
+                                Text("Nenhum registro de emoção encontrado na comunidade.")
+                                    .foregroundColor(.gray)
+                                    .padding(.vertical)
+                            } else {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
+                                    ForEach(emocoesComunidade) { emocao in
+                                        NavigationLink(destination: SugestoesComunidadeView(emocao: emocao)) {
+                                            EmocaoCardView(emocao: emocao)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -101,13 +105,19 @@ struct MapaSocialView: View {
                         .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
                         .padding(.horizontal)
                         
-                        // Dicas Mais Úteis da Semana
+                        // Dicas Mais Úteis da Semana (usa a propriedade calculada 'dicasPopulares')
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Dicas Mais Úteis da Semana")
                                 .font(.headline)
                             
-                            ForEach(dicasPopulares) { dica in
-                                DicaRowView(dica: dica)
+                            if dicasPopulares.isEmpty {
+                                Text("Nenhuma dica popular encontrada.")
+                                    .foregroundColor(.gray)
+                                    .padding(.vertical)
+                            } else {
+                                ForEach(dicasPopulares) { dica in
+                                    DicaRowView(dica: dica)
+                                }
                             }
                         }
                         .padding()
@@ -125,7 +135,9 @@ struct MapaSocialView: View {
             }
             .background(Color(.systemGray5))
             .sheet(isPresented: $showingShareSheet) {
+                // CompartilharDicaView precisa do EnvironmentObject injetado
                 CompartilharDicaView()
+                    .environmentObject(appData)
             }
         }
     }
@@ -185,9 +197,18 @@ struct DicaRowView: View {
         .padding(.vertical, 5)
     }
 }
-// Preview para o Xcode
+
+
 struct MapaSocialView_Previews: PreviewProvider {
+    
+    // Cria uma instância de teste do AppData para o Preview
+    @StateObject static var mockAppData = AppData()
+    
     static var previews: some View {
-        MapaSocialView()
+        NavigationStack {
+            MapaSocialView()
+                // Injeta o AppData no Preview
+                .environmentObject(mockAppData)
+        }
     }
 }

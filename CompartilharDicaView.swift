@@ -9,6 +9,9 @@ import SwiftUI
 
 struct CompartilharDicaView: View {
     
+    // Variável de ambiente para acessar o AppData
+    @EnvironmentObject var appData: AppData
+        
     // Variável para fechar a tela (sheet)
     @Environment(\.presentationMode) var presentationMode
     
@@ -72,12 +75,12 @@ struct CompartilharDicaView: View {
                 
                 // Botão de envio
                 Button("Compartilhar Dica") {
-                    // Lógica para enviar a dica com a emoção selecionada ou customizada
+                // Lógica para enviar a dica para o AppData
                     let emocaoFinal = selectedEmocao == "Selecione uma emoção..." ? customEmocao : selectedEmocao
-                    
-                    print("Emoção: \(emocaoFinal)")
-                    print("Dica: \(suaDica)")
-                    
+                            
+                    // Pssar a emoção final para a função salvarDica
+                    // appData.salvarDica(emocao: emocaoFinal, texto: suaDica)
+                            
                     presentationMode.wrappedValue.dismiss()
                 }
                 .frame(maxWidth: .infinity)

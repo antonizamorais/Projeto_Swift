@@ -45,7 +45,7 @@ struct ContentView: View {
                 }
                 .tag("Compartilhar")
             
-            // Aba 5: Colaborativo (corrigido)
+            // Aba 5: Colaborativ
             Text("Tela Colaborativa")
                 .tabItem {
                     Label("Colaborativo", systemImage: "person.3.fill")

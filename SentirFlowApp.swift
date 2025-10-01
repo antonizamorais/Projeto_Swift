@@ -9,6 +9,9 @@ import SwiftUI
 
 @main
 struct SentirFlowApp: App {
+    // Instância do AppData para ser compartilhada
+    @StateObject var appData = AppData()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

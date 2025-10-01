@@ -9,6 +9,9 @@ import SwiftUI
 
 struct RegistrarView: View {
     
+    // Variável de ambiente para acessar o AppData
+    @EnvironmentObject var appData: AppData
+    
     // Variáveis de estado para gerenciar a seleção e o texto do usuário
     @State private var selectedEmocao: String? = nil
     @State private var customEmocao: String = ""
@@ -123,10 +126,13 @@ struct RegistrarView: View {
                 
                 // Botão de salvar
                 Button("Salvar Registro") {
-                    // Lógica para salvar os dados
-                    print("Emoção selecionada: \(selectedEmocao ?? "Nenhuma")")
-                    print("Registro do dia: \(registroDiario)")
-                    print("Tags: \(tags.joined(separator: ", "))")
+                // Lógica para salvar os dados no AppData
+                    if let emocaoSelecionada = emocoes.first(where: { $0.nome == selectedEmocao }) {
+                            appData.salvarRegistro(emocao: emocaoSelecionada, texto: registroDiario, tags: tags)
+                                
+                                // Opcional: fechar a tela após o registro
+                                // presentationMode.wrappedValue.dismiss()
+                        }
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
