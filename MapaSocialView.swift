@@ -5,210 +5,160 @@
 //  Created by user on 20/09/25.
 //
 
-
 import SwiftUI
+import SwiftData
 
 struct MapaSocialView: View {
     
-    // Injeta o objeto de dados central
+    // Injeções de Ambiente
     @EnvironmentObject var appData: AppData
+    @Environment(\.modelContext) var modelContext
     
-    // Variável para controlar qual mapa está sendo exibido
-    @State private var selectedTab: String = "Comunidade"
-    
-    // Variável para controlar se o sheet de compartilhamento de dicas está visível
-    @State private var showingShareSheet = false
-    
-    // Propriedade calculada: Obtém os dados de emoção agregados do AppData
-    var emocoesComunidade: [Emocao] {
-        // Chamada correta da função
-        return appData.emocoesComunidade
-    }
-    
-    // Propriedade calculada: Obtém as 5 dicas mais populares
-    var dicasPopulares: [Dica] {
-        // Chamada correta da função
-        return appData.dicasMaisPopulares
-    }
+    // Variáveis de Estado
+    @State private var isSharingDica = false
+    @State private var selectedEmocao: Emocao? = nil // Controla o sheet de sugestões
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 25) {
                     
-                    // Seção de Cabeçalho
-                    VStack(spacing: 5) {
-                        Text("Mapa de Emoções Social")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Descubra como a comunidade está se sentindo e compartilhe experiências.")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    
-                    // Picker para alternar entre "Meu Mapa Pessoal" e "Mapa da Comunidade"
-                    Picker("Selecione o Mapa", selection: $selectedTab) {
-                        Text("Meu Mapa Pessoal").tag("Pessoal")
-                        Text("Mapa da Comunidade").tag("Comunidade")
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    
-                    // Conteúdo dinâmico baseado na seleção do Picker
-                    if selectedTab == "Comunidade" {
-                        
-                        // Cartões de Emoções (usa a propriedade calculada 'emocoesComunidade')
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Como a Comunidade Está Hoje")
-                                .font(.headline)
-                            
-                            if emocoesComunidade.isEmpty {
-                                Text("Nenhum registro de emoção encontrado na comunidade.")
-                                    .foregroundColor(.gray)
-                                    .padding(.vertical)
-                            } else {
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-                                    ForEach(emocoesComunidade) { emocao in
-                                        NavigationLink(destination: SugestoesComunidadeView(emocao: emocao)) {
-                                            EmocaoCardView(emocao: emocao)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
+                    // MARK: - Mapa de Emoções da Comunidade
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("A comunidade sente...")
+                                .font(.title2.bold())
+                            Spacer()
+                            Button {
+                                isSharingDica = true
+                            } label: {
+                                Label("Compartilhar", systemImage: "square.and.pencil")
+                                    .font(.subheadline)
                             }
                         }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
-                        .padding(.horizontal)
 
-                        // Seção "Compartilhe Suas Dicas"
-                        VStack(alignment: .leading, spacing: 15) {
-                            Text("Compartilhe Suas Dicas")
-                                .font(.headline)
-                            
-                            Button("Compartilhar Dica") {
-                                showingShareSheet = true
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
-                        .padding(.horizontal)
+                        // A chamada para CommunityEmotionsGrid agora funciona
+                        CommunityEmotionsGrid(
+                            emocoes: appData.calcularEmocoesComunidade(context: modelContext),
+                            selectedEmocao: $selectedEmocao
+                        )
+                    }
+                    
+                    Divider()
+                    
+                    // MARK: - Dicas Mais Populares
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Dicas Mais Populares")
+                            .font(.title2.bold())
+
+                        // Chamando a função diretamente para obter as dicas populares
+                        let dicasPopulares = appData.buscarDicasMaisPopulares(context: modelContext)
                         
-                        // Dicas Mais Úteis da Semana (usa a propriedade calculada 'dicasPopulares')
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Dicas Mais Úteis da Semana")
-                                .font(.headline)
-                            
-                            if dicasPopulares.isEmpty {
-                                Text("Nenhuma dica popular encontrada.")
-                                    .foregroundColor(.gray)
-                                    .padding(.vertical)
-                            } else {
-                                ForEach(dicasPopulares) { dica in
-                                    DicaRowView(dica: dica)
-                                }
+                        if dicasPopulares.isEmpty {
+                            Text("Nenhuma dica compartilhada ainda.")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(dicasPopulares) { dica in
+                                DicaRow(dica: dica)
                             }
                         }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 5)
-                        .padding(.horizontal)
-                        
-                    } else {
-                        // Exibe a tela "Meu Mapa Pessoal"
-                        MeuMapaPessoalView()
                     }
                 }
-                .padding(.vertical)
+                .padding()
             }
-            .background(Color(.systemGray5))
-            .sheet(isPresented: $showingShareSheet) {
-                // CompartilharDicaView precisa do EnvironmentObject injetado
+            .navigationTitle("Mapa Social")
+            .sheet(isPresented: $isSharingDica) {
                 CompartilharDicaView()
-                    .environmentObject(appData)
+            }
+            // Abre o modal de Sugestões
+            .sheet(item: $selectedEmocao) { emocao in
+                SugestoesComunidadeView(emocaoSelecionada: emocao)
             }
         }
     }
 }
 
-// Struct para o layout de cada cartão de emoção
-struct EmocaoCardView: View {
-    let emocao: Emocao
+// MARK: - Componente Auxiliar (CommunityEmotionsGrid)
+// Trazido para este arquivo para resolver o erro de escopo
+
+struct CommunityEmotionsGrid: View {
+    let emocoes: [Emocao]
+    @Binding var selectedEmocao: Emocao?
     
     var body: some View {
-        VStack(spacing: 5) {
-            Text(emocao.emoji)
-                .font(.largeTitle)
-            Text(emocao.nome)
-                .font(.subheadline)
-                .fontWeight(.bold)
-            Text("\(emocao.porcentagem)%")
-                .font(.caption)
-                .foregroundColor(.blue)
-            Text("\(emocao.usuarios) pessoas")
-                .font(.caption2)
-                .foregroundColor(.gray)
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
+            ForEach(emocoes, id: \.id) { emocao in
+                VStack(alignment: .leading) {
+                    Text("\(emocao.emoji) \(emocao.nome)")
+                        .font(.headline)
+                    
+                    ProgressView(value: Double(emocao.porcentagem), total: 100)
+                        .progressViewStyle(.linear)
+                        .tint(Color.blue)
+                    
+                    Text("\(emocao.porcentagem)% da comunidade")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .onTapGesture {
+                    selectedEmocao = emocao
+                }
+            }
         }
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 100)
-        .padding(5)
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
     }
 }
 
-// Struct para o layout de cada dica
-struct DicaRowView: View {
+
+// MARK: - Componente Auxiliar (DicaRow)
+// Trazido para este arquivo para resolver o erro de escopo
+
+struct DicaRow: View {
+    @EnvironmentObject var appData: AppData
+    @Environment(\.modelContext) var modelContext
+    
     let dica: Dica
     
     var body: some View {
-        HStack {
-            Image(systemName: "lightbulb.fill")
-                .foregroundColor(.yellow)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(dica.texto)
+                .font(.body)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(dica.texto)
+            HStack {
+                Text("Por: \(dica.autor)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                // Botão de Curtir
+                Button {
+                    appData.curtirDica(context: modelContext, dica: dica)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: dica.curtidas > 0 ? "heart.fill" : "heart")
+                            .foregroundColor(.red)
+                        Text("\(dica.curtidas)")
+                    }
                     .font(.subheadline)
-                Text(dica.autor)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            Spacer()
-            
-            HStack(spacing: 5) {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(.red)
-                Text("\(dica.curtidas)")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                }
+                .buttonStyle(.borderless)
             }
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, 4)
     }
 }
 
+// MARK: - Preview
 
 struct MapaSocialView_Previews: PreviewProvider {
-    
-    // Cria uma instância de teste do AppData para o Preview
     @StateObject static var mockAppData = AppData()
     
     static var previews: some View {
-        NavigationStack {
-            MapaSocialView()
-                // Injeta o AppData no Preview
-                .environmentObject(mockAppData)
-        }
+        MapaSocialView()
+            .environmentObject(mockAppData)
+            // O contêiner de modelo deve ser injetado no SentirFlowApp
     }
 }

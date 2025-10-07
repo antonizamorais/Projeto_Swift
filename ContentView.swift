@@ -5,24 +5,25 @@
 //  Created by user on 20/09/25.
 //
 
+// Arquivo ContentView.swift
+
 import SwiftUI
 
-// No seu arquivo ContentView.swift
 struct ContentView: View {
     
-    // Use @State para controlar qual aba está selecionada
-    @State private var selectedTab = "Mapa Social"
+    @EnvironmentObject var appData: AppData
     
+    @State private var selectedTab: String = "Mapa Social"
     
     var body: some View {
         TabView(selection: $selectedTab) {
             
-            // Aba 1: Mapa Social (agora é a tela inicial)
+            // Aba 1: Mapa Social
             MapaSocialView()
                 .tabItem {
                     Label("Mapa Social", systemImage: "map.circle.fill")
                 }
-                .tag("Mapa Social") // Identificador único para a aba
+                .tag("Mapa Social")
             
             // Aba 2: Registrar
             RegistrarView()
@@ -31,33 +32,33 @@ struct ContentView: View {
                 }
                 .tag("Registrar")
             
-            // Aba 3: Meus Dados
-            Text("Tela de Meus Dados")
+            // Aba 3: Meu Mapa Pessoal (Meus Dados)
+            MeuMapaPessoalView(appData: appData) // Passa o appData no init do Meus Dados
                 .tabItem {
                     Label("Meus Dados", systemImage: "person.circle.fill")
                 }
                 .tag("Meus Dados")
             
-            // Aba 4: Compartilhar
-            Text("Tela de Compartilhar")
+            // Aba 4: Compartilhar Dica (Diário Colaborativo)
+            // Usamos CompartilharDicaView, que funciona como um modal para o Diário Colaborativo
+            Text("Diário Colaborativo: Use o botão 'Compartilhar' no Mapa Social") // Placeholder
                 .tabItem {
-                    Label("Compartilhar", systemImage: "square.and.arrow.up.circle.fill")
+                    Label("Diário Colab.", systemImage: "square.and.arrow.up.circle.fill")
                 }
-                .tag("Compartilhar")
-            
-            // Aba 5: Colaborativ
-            Text("Tela Colaborativa")
-                .tabItem {
-                    Label("Colaborativo", systemImage: "person.3.fill")
-                }
-                .tag("Colaborativo")
+                .tag("Diário Colab.")
         }
     }
 }
 
-// Preview para o Xcode
+// MARK: - Preview
+
 struct ContentView_Previews: PreviewProvider {
+    // Injeta o AppData para que as previews funcionem
+    @StateObject static var mockAppData = AppData()
+    
     static var previews: some View {
         ContentView()
+            .environmentObject(mockAppData)
+            // O contêiner de modelo é injetado no SentirFlowApp
     }
 }

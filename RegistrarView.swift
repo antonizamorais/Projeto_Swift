@@ -6,152 +6,112 @@
 //
 
 import SwiftUI
+import SwiftData // Necessário para ModelContext
 
 struct RegistrarView: View {
     
-    // Variável de ambiente para acessar o AppData
     @EnvironmentObject var appData: AppData
+    @Environment(\.modelContext) var modelContext
     
-    // Variáveis de estado para gerenciar a seleção e o texto do usuário
-    @State private var selectedEmocao: String? = nil
-    @State private var customEmocao: String = ""
-    @State private var registroDiario: String = ""
-    @State private var newTag: String = ""
-    @State private var tags: [String] = ["#trabalho", "#familia", "#saúde", "#exercício", "#estudo", "#meditação"]
+    @State private var selectedEmocao: Emocao? = nil
+    @State private var textoDiario: String = ""
+    @State private var tagInput: String = ""
     
-    // Lista de emoções pré-definidas (com os parâmetros que faltavam)
-    let emocoes = [
-        Emocao(nome: "Feliz", porcentagem: 0, usuarios: 0, emoji: "😊"),
-        Emocao(nome: "Ansioso", porcentagem: 0, usuarios: 0, emoji: "😟"),
-        Emocao(nome: "Cansado", porcentagem: 0, usuarios: 0, emoji: "🥱"),
-        Emocao(nome: "Produtivo", porcentagem: 0, usuarios: 0, emoji: "🚀"),
-        Emocao(nome: "Triste", porcentagem: 0, usuarios: 0, emoji: "😞"),
-        Emocao(nome: "Inspirado", porcentagem: 0, usuarios: 0, emoji: "💡")
+    let emocoesDisponiveis: [Emocao] = [
+        Emocao(nome: "Feliz", porcentagem: 35, usuarios: 489, emoji: "😊"),
+        Emocao(nome: "Ansioso", porcentagem: 20, usuarios: 351, emoji: "😟"),
+        Emocao(nome: "Cansado", porcentagem: 30, usuarios: 374, emoji: "😩"),
+        Emocao(nome: "Triste", porcentagem: 10, usuarios: 122, emoji: "😔"),
+        Emocao(nome: "Grato", porcentagem: 5, usuarios: 88, emoji: "🙏"),
     ]
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                
-                // Título da tela
-                Text("Como você está se sentindo hoje?")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                // Botões de emoções
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("Escolha sua emoção principal:")
-                        .font(.headline)
+        // ... (Interface da View)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 25) {
                     
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-                        ForEach(emocoes, id: \.nome) { emocao in
-                            Button(action: {
-                                selectedEmocao = emocao.nome
-                            }) {
-                                VStack(spacing: 5) {
-                                    Text(emocao.emoji)
-                                        .font(.largeTitle)
-                                    Text(emocao.nome)
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                }
-                                .padding()
-                                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 100)
-                                .background(selectedEmocao == emocao.nome ? Color.blue.opacity(0.2) : Color(.systemGray6))
-                                .cornerRadius(10)
-                                .foregroundColor(.primary)
+                    // ... (Campos de Emocao, Texto e Tags)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Como você se sente hoje?")
+                            .font(.headline)
+                        
+                        Picker("Selecione uma emoção...", selection: $selectedEmocao) {
+                            Text("Selecione uma emoção...").tag(nil as Emocao?)
+                            
+                            ForEach(emocoesDisponiveis) { emocao in
+                                // Emocao deve ser Hashable/Equatable
+                                Text("\(emocao.emoji) \(emocao.nome)").tag(emocao as Emocao?)
                             }
                         }
-                    }
-                }
-                
-                // Campo de texto para o diário
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Conte-nos mais sobre o seu dia:")
-                        .font(.headline)
-                    
-                    TextEditor(text: $registroDiario)
-                        .frame(height: 150)
-                        .padding(8)
+                        .pickerStyle(.menu)
+                        .padding()
                         .background(Color(.systemGray6))
                         .cornerRadius(10)
-                        .overlay(
-                            Text("O que aconteceu hoje? Qual foi o ponto alto/baixo do seu dia?")
-                                .foregroundColor(Color(UIColor.placeholderText))
-                                .padding(12)
-                                .opacity(registroDiario.isEmpty ? 1 : 0)
-                        )
-                }
-                
-                // Seção de tags
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Tags do dia:")
-                        .font(.headline)
-                    
-                    // Exibição das tags existentes
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
-                        ForEach(tags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color.purple)
-                                .cornerRadius(15)
-                        }
                     }
                     
-                    // Campo para criar nova tag
-                    HStack {
-                        TextField("Criar nova tag...", text: $newTag)
-                            .padding()
+                    VStack(alignment: .leading) {
+                        Text("Seus pensamentos")
+                            .font(.headline)
+                        
+                        TextEditor(text: $textoDiario)
+                            .frame(height: 150)
+                            .padding(4)
                             .background(Color(.systemGray6))
                             .cornerRadius(10)
                         
-                        Button("Adicionar") {
-                            if !newTag.isEmpty {
-                                tags.append("#\(newTag)")
-                                newTag = ""
-                            }
+                        if textoDiario.isEmpty {
+                            Text("Digite aqui o que aconteceu hoje...")
+                                .foregroundColor(Color(.placeholderText))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 12)
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                        .background(Color.purple)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
                     }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Contexto (Tags)")
+                            .font(.headline)
+                        TextField("Ex: #trabalho, #família", text: $tagInput)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    Spacer()
+                    
+                    // MARK: - Botão Salvar
+                    Button("Salvar Registro") {
+                        salvarRegistro()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .padding(.top, 20)
                 }
-                
-                Spacer()
-                
-                // Botão de salvar
-                Button("Salvar Registro") {
-                // Lógica para salvar os dados no AppData
-                    if let emocaoSelecionada = emocoes.first(where: { $0.nome == selectedEmocao }) {
-                            appData.salvarRegistro(emocao: emocaoSelecionada, texto: registroDiario, tags: tags)
-                                
-                                // Opcional: fechar a tela após o registro
-                                // presentationMode.wrappedValue.dismiss()
-                        }
-                }
-                .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(10)
             }
-            .padding()
+            .navigationTitle("Novo Registro")
         }
-        .navigationTitle("Diário Privado")
-        .navigationBarTitleDisplayMode(.inline)
     }
-}
-
-// Preview para o Xcode
-struct RegistrarView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            RegistrarView()
+    
+    func salvarRegistro() {
+        guard let emocao = selectedEmocao else {
+            return
         }
+        
+        let tagsFinais = tagInput.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        
+        // Chamada correta com ModelContext
+        appData.salvarRegistro(
+            context: modelContext,
+            emocao: emocao,
+            texto: textoDiario,
+            tags: tagsFinais
+        )
+        
+        selectedEmocao = nil
+        textoDiario = ""
+        tagInput = ""
     }
 }

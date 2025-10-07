@@ -6,107 +6,118 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CompartilharDicaView: View {
     
-    // Variável de ambiente para acessar o AppData
+    // Injeções de Ambiente
     @EnvironmentObject var appData: AppData
-        
-    // Variável para fechar a tela (sheet)
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss // Necessário para fechar o modal
+    @Environment(\.modelContext) var modelContext
     
-    // Variáveis para armazenar a seleção do usuário
-    @State private var selectedEmocao: String = "Selecione uma emoção..."
-    @State private var customEmocao: String = ""
+    // Variáveis de Estado
+    @State private var selectedEmocao: Emocao? = nil
     @State private var suaDica: String = ""
     
-    // Texto de exemplo para o campo de dica
-    @State private var placeholderDica = "Ex: Respirar 4-7-8, caminhar por 10min, ouvir uma música, etc..."
-    
-    // Opções de emoção para o seletor
-    let emocoes = ["Selecione uma emoção...", "Ansiedade", "Tristeza", "Cansaço", "Felicidade", "Inspiração", "Produtividade"]
+    // Lista de emoções pré-definidas (para o Picker)
+    let emocoesDisponiveis: [Emocao] = [
+        Emocao(nome: "Ansiedade", porcentagem: 20, usuarios: 351, emoji: "😟"),
+        Emocao(nome: "Tristeza", porcentagem: 10, usuarios: 122, emoji: "😔"),
+        Emocao(nome: "Cansaço", porcentagem: 30, usuarios: 374, emoji: "😩"),
+        Emocao(nome: "Felicidade", porcentagem: 35, usuarios: 489, emoji: "😊"),
+        Emocao(nome: "Inspiração", porcentagem: 3, usuarios: 64, emoji: "✨"),
+        Emocao(nome: "Produtividade", porcentagem: 15, usuarios: 187, emoji: "💪")
+    ]
     
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Para qual emoção?")
-                    .font(.subheadline)
-                
-                // Seletor de emoções (Picker) com largura ajustada
-                Picker("Selecione uma emoção...", selection: $selectedEmocao) {
-                    ForEach(emocoes, id: \.self) { emocao in
-                        Text(emocao)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                
-                // Campo para digitar uma emoção customizada, visível se "Selecione uma emoção" for escolhido
-                if selectedEmocao == "Selecione uma emoção..." {
-                    Text("Outra emoção?")
-                        .font(.subheadline)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
                     
-                    TextField("Digite sua emoção aqui...", text: $customEmocao)
+                    // MARK: - Seleção de Emoção
+                    VStack(alignment: .leading) {
+                        Text("Para qual emoção?")
+                            .font(.headline)
+                        
+                        Picker("Selecione uma emoção...", selection: $selectedEmocao) {
+                            Text("Selecione uma emoção...").tag(nil as Emocao?)
+                            
+                            ForEach(emocoesDisponiveis) { emocao in
+                                Text("\(emocao.emoji) \(emocao.nome)").tag(emocao as Emocao?)
+                            }
+                        }
+                        .pickerStyle(.menu)
                         .padding()
                         .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                }
-                
-                Text("Sua dica")
-                    .font(.subheadline)
-                
-                // Campo de texto para a dica com cor e placeholder
-                ZStack(alignment: .topLeading) {
-                    if suaDica.isEmpty {
-                        Text(placeholderDica)
-                            .foregroundColor(Color(UIColor.placeholderText))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 12)
+                        .cornerRadius(8)
                     }
-                    TextEditor(text: $suaDica)
-                        .frame(height: 100)
-                        .padding(4)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
+                    
+                    // MARK: - Campo da Dica
+                    VStack(alignment: .leading) {
+                        Text("Sua dica")
+                            .font(.headline)
+                        
+                        ZStack(alignment: .topLeading) {
+                            TextEditor(text: $suaDica)
+                                .frame(height: 100)
+                                .padding(4)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
+
+                            if suaDica.isEmpty {
+                                Text("Ex: Respiração 4-7-8, caminhada de 10min...")
+                                    .foregroundColor(Color(.placeholderText))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 12)
+                            }
+                        }
+                    }
+                    
+                    // MARK: - Botão de Envio
+                    Button("Compartilhar Dica") {
+                        salvarDica()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .padding(.top, 10)
+                    
+                    Spacer()
                 }
-                
-                // Botão de envio
-                Button("Compartilhar Dica") {
-                // Lógica para enviar a dica para o AppData
-                    let emocaoFinal = selectedEmocao == "Selecione uma emoção..." ? customEmocao : selectedEmocao
-                            
-                    // Pssar a emoção final para a função salvarDica
-                    // appData.salvarDica(emocao: emocaoFinal, texto: suaDica)
-                            
-                    presentationMode.wrappedValue.dismiss()
-                }
-                .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(10)
             }
-            .padding()
             .navigationTitle("Compartilhe Suas Dicas")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancelar") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss() // Fecha o modal
                     }
                 }
             }
         }
     }
-}
-
-// Preview para o Xcode
-struct CompartilharDicaView_Previews: PreviewProvider {
-    static var previews: some View {
-        CompartilharDicaView()
+    
+    // MARK: - Lógica de Salvamento
+    
+    func salvarDica() {
+        guard let emocao = selectedEmocao, !suaDica.isEmpty else {
+            print("Aviso: Selecione uma emoção e digite uma dica válida.")
+            return
+        }
+        
+        // Chamada correta com ModelContext
+        appData.salvarDica(
+            context: modelContext,
+            emocao: emocao,
+            texto: suaDica
+        )
+        
+        // Limpa o formulário e fecha o sheet
+        selectedEmocao = nil
+        suaDica = ""
+        dismiss()
     }
 }
-
